@@ -236,13 +236,21 @@ defmodule Reagent do
       state = state.connections(connections)
       state = state.waiting(waiting)
     else
-      Enum.each listeners, fn { _, Listener[acceptors: acceptors] } ->
-        Enum.each acceptors, fn acceptor ->
-          if acceptor == pid do
-            IO.puts "BIP BIP BIP"
-          end
+      listener = Listener[id: id, acceptors: acceptors] = Seq.find_value listeners, fn { _, Listener[acceptors: acceptors] = listener } ->
+        if Seq.member?(acceptors, pid) do
+          listener
         end
       end
+
+      listener = Seq.map(acceptors, fn
+        ^pid ->
+          listener.module.start_link(Process.self, listener.acceptors(length(acceptors)))
+
+        acceptor ->
+          acceptor
+      end) |> listener.acceptors
+
+      state = listeners |> Dict.put(id, listener)
     end
 
     { :noreply, state }
