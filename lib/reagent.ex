@@ -121,7 +121,7 @@ defmodule Reagent do
     end
   end
 
-  def handle_cast({ :accepted, Connection[listener: Listener[id: id]] = conn, pid }, State[connections: connections, count: count] = state) do
+  def handle_call({ :accepted, Connection[listener: Listener[id: id]] = conn, pid }, _from, State[connections: connections, count: count] = state) do
     if Process.alive?(pid) do
       Process.link pid
 
@@ -133,34 +133,35 @@ defmodule Reagent do
       state = state.connections(connections)
     end
 
-    { :noreply, state }
+    { :reply, :ok, state }
   end
 
   def handle_call({ :wait, Listener[] = listener }, from, State[options: options, count: listeners, waiting: waiting] = state) do
-    if Keyword.has_key?(options, :max_connections) or Keyword.has_key?(listener.options, :max_connections) do
-      total = listeners[:total] || 0
-      count = listeners[listener.id] || 0
+    cond do
+      # max pool wide connections reached
+      options[:max_connections] && listeners[:total] || 0 >= options[:max_connections] ->
+        waiting = waiting |> Dict.update(listener.id, [], &[from | &1])
 
-      cond do
-        options[:max_connections] && total >= options[:max_connections] ->
-          waiting = waiting |> Dict.update(listener.id, [], &[from | &1])
+        { :noreply, state.waiting(waiting) }
 
-          { :noreply, state.waiting(waiting) }
+      # max listener specific connections number reached
+      listener.options[:max_connections] && listeners[listener.id] || 0 >= listener.options[:max_connections] ->
+        waiting = waiting |> Dict.update(listener.id, [], &[from | &1])
 
-        listener.options[:max_connections] && count >= listener.options[:max_connections] ->
-          waiting = waiting |> Dict.update(listener.id, [], &[from | &1])
+        { :noreply, state.waiting(waiting) }
 
-          { :noreply, state.waiting(waiting) }
-      end
-    else
-      { :reply, :ok, state }
+      # all good, keep going
+      true ->
+        { :reply, :ok, state }
     end
   end
 
+  # get the total number of connections
   def handle_call(:count, _from, State[count: listeners] = _state) do
-    { :reply, Seq.reduce(listeners, 0, &(elem(&1, 1) + &2)), _state }
+    { :reply, listeners[:total], _state }
   end
 
+  # get the number of connections on the given listener
   def handle_call({ :count, listener }, _from, State[count: listeners] = _state) do
     { :reply, listeners[listener.id] || 0, _state }
   end
@@ -184,12 +185,12 @@ defmodule Reagent do
       state = state.count(count)
       state = state.connections(connections)
       state = state.waiting(waiting)
-    end
-
-    Enum.each listeners, fn { _, Listener[acceptors: acceptors] } ->
-      Enum.each acceptors, fn acceptor ->
-        if acceptor == pid do
-          IO.puts "BIP BIP BIP"
+    else
+      Enum.each listeners, fn { _, Listener[acceptors: acceptors] } ->
+        Enum.each acceptors, fn acceptor ->
+          if acceptor == pid do
+            IO.puts "BIP BIP BIP"
+          end
         end
       end
     end
