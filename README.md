@@ -24,8 +24,8 @@ listener descriptor.
 Listener descriptors contain the definition of the listener, including address,
 port, whether it's secure or not and other `:inet.setopts` options.
 
-Reagent beahaviour
-------------------
+Reagent behaviour
+-----------------
 A reagent to do anything useful as to either implement `handle/1` or `start/1`.
 
 `handle/1` is called by the default `start/1` and it gets called as the entry
@@ -35,6 +35,16 @@ point of an internally created process. It gets called with a
 This is usually useful to implement simple protocols when you don't need a full
 blown `gen_server` or similar to handle a connection.
 
+If you want more complex connection handling you can define `start/1`, it gets
+called with a `Reagent.Connection` record as well and must return `{ :ok, pid
+}` or `{ :error, reason }`. The returned process will be made owner of the
+socket and be used as reference for the connection itself.
+
+You can also define `accept/1` which gets called with the `Reagent.Listener`
+and allows you more fine grained socket acception.
+
+Simple example
+--------------
 ```elixir
 defmodule Echo do
   use Reagent.Behaviour
@@ -46,14 +56,12 @@ defmodule Echo do
 end
 ```
 
-This simple example is the implementation of a single-message echo server; to start it
-on port 8080 just run `Reagent.start Echo, port: 8080`.
+This is the implementation of a single-message echo server.
 
-If you want more complex connection handling you can define `start/1`, it gets
-called with a `Reagent.Connection` record as well and must return `{ :ok, pid
-}` or `{ :error, reason }`. The returned process will be made owner of the
-socket and be used as reference for the connection itself.
+To start it on port 8080 just run `Reagent.start Echo, port: 8080`.
 
+Complex example
+---------------
 ```elixir
 defmodule Echo do
   defmodule Client do
@@ -90,9 +98,8 @@ defmodule Echo do
 end
 ```
 
-This more complex example is the implementation of a full-blown `gen_server`
-based echo server (which is obviously overkill); as with the simpler example
-you just start it with `Reagent.start Echo, port: 8080`.
+This is the implementation of a full-blown `gen_server` based echo server
+(which is obviously overkill).
 
-You can also define `accept/1` which gets called with the `Reagent.Listener`
-and allows you more fine grained socket acception.
+As with the simple example you just start it with `Reagent.start Echo, port:
+8080`.
