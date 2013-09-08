@@ -23,15 +23,25 @@ defmodule Reagent.Behaviour do
 
       @doc false
       def run(pool, listener) do
+        # wait for the max connections limit to be fulfilled
+        :gen_server.call(pool, { :wait, listener }, :infinity) |> IO.inspect
+
         case accept(listener) do
           { :ok, socket } ->
             conn = Connection[id: make_ref, pool: pool, listener: listener, socket: socket]
 
             case start(conn) do
               { :ok, pid } ->
+                # if it's linked bad things will happen
+                Process.unlink(pid)
+
+                # set the new pid as owner of the socket
                 socket |> Socket.process!(pid)
 
-                :gen_server.cast pool, { :accepted, conn, pid }
+                # tell the pool we accepted a connection so it can start monitoring it
+                :gen_server.call pool, { :accepted, conn, pid }
+
+                # send the ack to the pid
                 pid <- { Reagent, :ack }
 
               { :error, _ } = error ->
@@ -41,8 +51,6 @@ defmodule Reagent.Behaviour do
           { :error, _ } = error ->
             exit error
         end
-
-        :gen_server.call(pool, { :wait, listener }, :infinity)
 
         run(pool, listener)
       end
