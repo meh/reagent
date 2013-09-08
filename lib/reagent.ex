@@ -45,6 +45,11 @@ defmodule Reagent do
     :gen_server.start_link __MODULE__, [options, listeners], []
   end
 
+  @doc """
+  Wait for the ack.
+  """
+  @spec wait          :: :ok
+  @spec wait(timeout) :: :ok | { :timeout, timeout }
   def wait(timeout // :infinity) do
     receive do
       { Reagent, :ack } ->
@@ -55,6 +60,10 @@ defmodule Reagent do
     end
   end
 
+  @doc """
+  Add a new listener to the reagent.
+  """
+  @spec listen(pid, Keyword.t) :: :ok | { :error, term }
   def listen(pool, descriptor) do
     :gen_server.call(pool, { :listen, descriptor })
   end
@@ -141,6 +150,7 @@ defmodule Reagent do
     end
   end
 
+  # adds a new listener at runtime
   def handle_call({ :listen, listener }, _from, State[options: options, listeners: listeners] = state) do
     case create(options, listener) do
       { :ok, listener } ->
@@ -153,6 +163,7 @@ defmodule Reagent do
     end
   end
 
+  # accepts a new connection, as long as the pid is still alive
   def handle_call({ :accepted, Connection[listener: Listener[id: id]] = conn, pid }, _from, State[connections: connections, count: count] = state) do
     if Process.alive?(pid) do
       Process.link pid
@@ -168,6 +179,8 @@ defmodule Reagent do
     { :reply, :ok, state }
   end
 
+  # makes the caller wait in case the maximum connections threshold has been
+  # reached, must be called with :infinity timeout or shit hits the fan
   def handle_call({ :wait, Listener[] = listener }, from, State[options: options, count: listeners, waiting: waiting] = state) do
     cond do
       # max pool wide connections reached
@@ -202,6 +215,7 @@ defmodule Reagent do
     { :reply, listeners[listener] || 0, _state }
   end
 
+  # some monitored process died, most likely a connection
   def handle_info({ :EXIT, pid, _reason }, State[listeners: listeners, connections: connections, waiting: waiting, count: count] = state) do
     if Connection[listener: Listener[id: id]] = connections |> Dict.get(pid) do
       count       = count |> Dict.update(id, &(&1 - 1))
