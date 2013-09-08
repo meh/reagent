@@ -1,3 +1,11 @@
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#                    Version 2, December 2004
+#
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+#
+#  0. You just DO WHAT THE FUCK YOU WANT TO.
+
 defrecord Reagent.Listener, id: nil, master: nil, socket: nil, address: nil, port: nil, acceptors: 1, secure: nil, options: [], details: nil do
   def secure?(__MODULE__[secure: nil]), do: false
   def secure?(__MODULE__[]),            do: true
