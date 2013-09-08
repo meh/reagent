@@ -2,7 +2,14 @@ defmodule Echo do
   use Reagent.Behaviour
 
   def handle(conn) do
-    conn |> Socket.Stream.send!(conn |> Socket.Stream.recv!)
-    conn |> Socket.close
+    case conn |> Socket.Stream.recv! do
+      nil ->
+        :closed
+
+      data ->
+        conn |> Socket.Stream.send! data
+
+        handle(conn)
+    end
   end
 end
