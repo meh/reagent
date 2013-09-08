@@ -17,34 +17,34 @@ defmodule Reagent.Behaviour do
       @behaviour unquote(__MODULE__)
 
       @doc false
-      def start_link(master, listener) do
-        Process.spawn_link __MODULE__, :run, [master, listener]
+      def start_link(pool, listener) do
+        Process.spawn_link __MODULE__, :run, [pool, listener]
       end
 
       @doc false
-      def run(master, listener) do
-        :gen_server.call(master, { :wait, listener }, :infinity)
-
+      def run(pool, listener) do
         case accept(listener) do
           { :ok, socket } ->
-            conn = Connection[id: make_ref, master: master, listener: listener, socket: socket]
+            conn = Connection[id: make_ref, pool: pool, listener: listener, socket: socket]
 
             case start(conn) do
               { :ok, pid } ->
                 socket |> Socket.process!(pid)
 
-                :gen_server.cast master, { :accepted, conn, pid }
+                :gen_server.cast pool, { :accepted, conn, pid }
                 pid <- { Reagent, :ack }
 
               { :error, _ } = error ->
-                Process.exit Process.self, error
+                exit error
             end
 
           { :error, _ } = error ->
-            Process.exit Process.self, error
+            exit error
         end
 
-        run(master, listener)
+        :gen_server.call(pool, { :wait, listener }, :infinity)
+
+        run(pool, listener)
       end
 
       def accept(Listener[socket: socket]) do
