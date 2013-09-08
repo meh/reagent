@@ -1,4 +1,4 @@
-defrecord Reagent.Connection, id: nil, master: nil, listener: nil, socket: nil, details: nil do
+defrecord Reagent.Connection, socket: nil, id: nil, master: nil, listener: nil, details: nil do
   def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.TCP) do
     false
   end
@@ -6,4 +6,39 @@ defrecord Reagent.Connection, id: nil, master: nil, listener: nil, socket: nil, 
   def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.SSL) do
     true
   end
+end
+
+defimpl Socket.Protocol, for: Reagent.Connection do
+  use Socket.Helpers
+
+  defwrap equal?(self, other)
+
+  defwrap accept(self)
+  defwrap accept(self, options)
+
+  defwrap options(self, options)
+  defwrap packet(self, type)
+  defwrap process(self, pid)
+
+  defwrap active(self)
+  defwrap active(self, mode)
+  defwrap passive(self)
+
+  defwrap local(self)
+  defwrap remote(self)
+
+  defwrap close(self)
+end
+
+defimpl Socket.Stream.Protocol, for: Reagent.Connection do
+  use Socket.Helpers
+
+  defwrap send(self, data)
+
+  defwrap recv(self)
+  defwrap recv(self, length_or_options)
+  defwrap recv(self, length, options)
+
+  defwrap shutdown(self)
+  defwrap shutdown(self, how)
 end
