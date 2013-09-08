@@ -50,13 +50,20 @@ defmodule Echo do
   use Reagent.Behaviour
 
   def handle(conn) do
-    conn |> Socket.Stream.send!(conn |> Socket.Stream.recv!)
-    conn |> Socket.close
+    case conn |> Socket.Stream.recv! do
+      nil ->
+        :closed
+
+      data ->
+        conn |> Socket.Stream.send! data
+
+        handle(conn)
+    end
   end
 end
 ```
 
-This is the implementation of a single-message echo server.
+This is a simple implementation of an echo server.
 
 To start it on port 8080 just run `Reagent.start Echo, port: 8080`.
 
@@ -72,7 +79,8 @@ defmodule Echo do
     end
 
     # this message is sent when the socket has been completely accepted and the
-    # process has been made owner of the socket
+    # process has been made owner of the socket, you don't need to wait for it
+    # when implementing handle because it's internally handled
     def handle_info({ Reagent, :ack }, connection) do
       connection |> Socket.active!
 
