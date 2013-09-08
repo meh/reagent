@@ -55,6 +55,10 @@ defmodule Reagent do
     end
   end
 
+  def listen(pool, descriptor) do
+    :gen_server.call(pool, { :listen, descriptor })
+  end
+
   use GenServer.Behaviour
 
   alias Reagent.Listener
@@ -118,6 +122,18 @@ defmodule Reagent do
       end
     else
       { :error, :no_module }
+    end
+  end
+
+  def handle_call({ :listen, listener }, _from, State[options: options, listeners: listeners] = state) do
+    case create(options, listener) do
+      { :ok, listener } ->
+        listeners = listeners |> Dict.put(listener.id, listener)
+
+        { :reply, :ok, state.listeners(listeners) }
+
+      { :error, _ } = error ->
+        { :reply, error, state }
     end
   end
 
