@@ -42,6 +42,7 @@ defimpl Socket.Stream.Protocol, for: Reagent.Connection do
   use Socket.Helpers
 
   defwrap send(self, data)
+  defwrap file(self, path, options)
 
   defwrap recv(self)
   defwrap recv(self, length_or_options)
