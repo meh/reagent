@@ -71,37 +71,35 @@ Complex example
 ---------------
 ```elixir
 defmodule Echo do
-  defmodule Client do
-    use GenServer.Behaviour
-
-    def init(connection) do
-      { :ok, connection }
-    end
-
-    # this message is sent when the socket has been completely accepted and the
-    # process has been made owner of the socket, you don't need to wait for it
-    # when implementing handle because it's internally handled
-    def handle_info({ Reagent, :ack }, connection) do
-      connection |> Socket.active!
-
-      { :noreply, connection }
-    end
-
-    def handle_info({ :tcp, _, data }, connection) do
-      connection |> Socket.Stream.send! data
-
-      { :noreply, connection }
-    end
-
-    def handle_info({ :tcp_closed, _ }, _connection) do
-      { :stop, :normal, _connection }
-    end
-  end
-
   use Reagent.Behaviour
 
   def start(connection) do
-    :gen_server.start(Client, connection, [])
+    :gen_server.start __MODULE__, connection, []
+  end
+
+  use GenServer.Behaviour
+
+  def init(connection) do
+    { :ok, connection }
+  end
+
+  # this message is sent when the socket has been completely accepted and the
+  # process has been made owner of the socket, you don't need to wait for it
+  # when implementing handle because it's internally handled
+  def handle_info({ Reagent, :ack }, connection) do
+    connection |> Socket.active!
+
+    { :noreply, connection }
+  end
+
+  def handle_info({ :tcp, _, data }, connection) do
+    connection |> Socket.Stream.send! data
+
+    { :noreply, connection }
+  end
+
+  def handle_info({ :tcp_closed, _ }, _connection) do
+    { :stop, :normal, _connection }
   end
 end
 ```
