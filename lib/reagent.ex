@@ -59,6 +59,22 @@ defmodule Reagent do
     :gen_server.call(pool, { :listen, descriptor })
   end
 
+  @doc """
+  Get the total number of connections in this reagent.
+  """
+  @spec count(pid) :: non_neg_integer
+  def count(pool) do
+    :gen_server.call(pool, :count)
+  end
+
+  @doc """
+  Get the number of connections in the given listener.
+  """
+  @spec count(pid, Listener.t | reference) :: non_neg_integer
+  def count(pool, listener) do
+    :gen_server.call(pool, { :count, listener })
+  end
+
   use GenServer.Behaviour
 
   alias Reagent.Listener
@@ -174,12 +190,16 @@ defmodule Reagent do
 
   # get the total number of connections
   def handle_call(:count, _from, State[count: listeners] = _state) do
-    { :reply, listeners[:total], _state }
+    { :reply, listeners[:total] || 0, _state }
   end
 
   # get the number of connections on the given listener
   def handle_call({ :count, listener }, _from, State[count: listeners] = _state) do
-    { :reply, listeners[listener.id] || 0, _state }
+    if listener |> is_record Listener do
+      listener = listener.id
+    end
+
+    { :reply, listeners[listener] || 0, _state }
   end
 
   def handle_info({ :EXIT, pid, _reason }, State[listeners: listeners, connections: connections, waiting: waiting, count: count] = state) do
