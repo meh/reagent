@@ -1,7 +1,7 @@
 reagent - socket acceptor pool
 ==============================
 **reagent** is a socket acceptor pool for Elixir that leverages the
-(socket)[https://github.com/meh/elixir-socket] library and its protocols to
+[socket](https://github.com/meh/elixir-socket) library and its protocols to
 provide an easy way to implement servers.
 
 Getting started
