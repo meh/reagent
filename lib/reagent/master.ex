@@ -2,10 +2,12 @@ defmodule Reagent.Master do
   use GenServer.Behaviour
 
   alias Reagent.Listener
+  alias Reagent.Connection
+
   alias Data.Seq
   alias Data.Dict
 
-  defrecord State, listeners: [], connections: HashDict.new
+  defrecord State, listeners: HashDict.new, connections: HashDict.new, count: HashDict.new, waiting: HashDict.new
 
   def init([module, details, listeners]) do
     Process.flag :trap_exit, true
@@ -63,28 +65,63 @@ defmodule Reagent.Master do
     end
   end
 
-  def handle_cast({ :accepted, conn, pid }, State[connections: connections] = state) do
+  def handle_cast({ :accepted, Connection[listener: Listener[id: id]] = conn, pid }, State[connections: connections, count: count] = state) do
     if Process.alive?(pid) do
       Process.link pid
 
+      count       = count |> Dict.update(id, 0, &(&1 + 1))
       connections = connections |> Dict.put(pid, conn)
-      state       = state.connections connections
+
+      state = state.count(count)
+      state = state.connections(connections)
     end
 
     { :noreply, state }
   end
 
-  def handle_call(:count, _from, State[connections: connections] = _state) do
-    { :reply, Data.count(connections), _state }
+  def handle_call({ :wait, listener }, from, State[count: listeners, waiting: waiting] = state) do
+    count = listeners[listener.id]
+    max   = listener.options[:max_connections]
+
+    if max && count > max do
+      waiting = waiting |> Dict.put(listener.id, from)
+
+      { :noreply, state.waiting(waiting) }
+    else
+      { :reply, :ok, state }
+    end
   end
 
-  def handle_call({ :count, listener }, _from, State[connections: connections] = _state) do
-    { :reply, Seq.count(connections, &(&1.listener == listener)), _state }
+  def handle_call(:count, _from, State[count: listeners] = _state) do
+    { :reply, Seq.reduce(listeners, 0, &(elem(&1, 1) + &2)), _state }
   end
 
-  def handle_info({ :EXIT, pid, reason }, State[listeners: listeners, connections: connections] = state) do
-    if connections |> Dict.has_key?(pid) do
-      state = connections |> Dict.delete(pid) |> state.connections
+  def handle_call({ :count, listener }, _from, State[count: listeners] = _state) do
+    { :reply, listeners[listener.id] || 0, _state }
+  end
+
+  def handle_info({ :EXIT, pid, _reason }, State[listeners: listeners, connections: connections, waiting: waiting, count: count] = state) do
+    if Connection[listener: Listener[id: id]] = connections |> Dict.get(pid) do
+      count       = count |> Dict.update(id, &(&1 - 1))
+      connections = connections |> Dict.delete(pid)
+
+      if wait = waiting[id] do
+        :gen_server.reply(wait, :ok)
+
+        waiting = waiting |> Dict.delete(id)
+      end
+
+      state = state.count(count)
+      state = state.connections(connections)
+      state = state.waiting(waiting)
+    end
+
+    Enum.each listeners, fn { _, Listener[acceptors: acceptors] } ->
+      Enum.each acceptors, fn acceptor ->
+        if acceptor == pid do
+          IO.puts "BIP BIP BIP"
+        end
+      end
     end
 
     { :noreply, state }

@@ -15,6 +15,8 @@ defmodule Reagent.Behaviour do
 
       @doc false
       def run(master, listener) do
+        :gen_server.call(master, { :wait, listener }, :infinity)
+
         case accept(listener) do
           { :ok, socket } ->
             conn = Connection[id: make_ref, master: master, listener: listener, socket: socket]
