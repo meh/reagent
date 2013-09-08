@@ -24,7 +24,7 @@ defmodule Reagent.Behaviour do
       @doc false
       def run(pool, listener) do
         # wait for the max connections limit to be fulfilled
-        :gen_server.call(pool, { :wait, listener }, :infinity) |> IO.inspect
+        :gen_server.call(pool, { :wait, listener }, :infinity)
 
         case accept(listener) do
           { :ok, socket } ->
