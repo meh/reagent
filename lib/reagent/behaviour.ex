@@ -17,7 +17,7 @@ defmodule Reagent.Behaviour do
       def run(master, listener) do
         case accept(listener) do
           { :ok, socket } ->
-            conn = Connection[socket: socket, listener: listener]
+            conn = Connection[id: make_ref, master: master, listener: listener, socket: socket]
 
             case start(conn) do
               { :ok, pid } ->

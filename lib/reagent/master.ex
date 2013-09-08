@@ -7,14 +7,14 @@ defmodule Reagent.Master do
 
   defrecord State, listeners: [], connections: HashDict.new
 
-  def init([module, options]) do
+  def init([module, details, listeners]) do
     Process.flag :trap_exit, true
 
-    if Seq.first(options) |> is_tuple do
-      options = [options]
+    if Seq.first(listeners) |> is_tuple do
+      listeners = [listeners]
     end
 
-    listeners = Seq.map options, &create(module, &1)
+    listeners = Seq.map listeners, &create(module, details, &1)
     error     = listeners |> Seq.find_value fn
       { :error, _ } = error ->
         error
@@ -26,13 +26,22 @@ defmodule Reagent.Master do
     if error do
       error
     else
-      { :ok, State[listeners: Seq.map(listeners, &elem(&1, 1))] }
+      listeners = HashDict.new listeners, fn { :ok, listener } ->
+        { listener.id, listener }
+      end
+
+      { :ok, State[listeners: listeners] }
     end
   end
 
-  defp create(module, options) do
-    listener = Listener.new(options)
-    listener = listener.master Process.self
+  defp create(module, details, listener) do
+    listener = Listener.new(listener)
+    listener = listener.id(make_ref)
+    listener = listener.master(Process.self)
+
+    if details do
+      listener = listener.details details
+    end
 
     socket = if listener.secure? do
       Socket.SSL.listen listener.port, listener.to_options

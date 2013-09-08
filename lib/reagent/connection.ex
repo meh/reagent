@@ -1,4 +1,4 @@
-defrecord Reagent.Connection, listener: nil, socket: nil, details: nil do
+defrecord Reagent.Connection, id: nil, master: nil, listener: nil, socket: nil, details: nil do
   def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.TCP) do
     false
   end
