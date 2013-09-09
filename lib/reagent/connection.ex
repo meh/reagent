@@ -14,6 +14,12 @@ defrecord Reagent.Connection, socket: nil, id: nil, pool: nil, listener: nil, de
   def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.SSL) do
     true
   end
+
+  def negotiated_protocol(__MODULE__[socket: socket] = self) do
+    if secure?(self) do
+      socket |> Socket.SSL.negotiated_protocol
+    end
+  end
 end
 
 defimpl Socket.Protocol, for: Reagent.Connection do
