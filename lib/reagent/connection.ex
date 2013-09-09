@@ -7,6 +7,10 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 defrecord Reagent.Connection, socket: nil, id: nil, pool: nil, listener: nil, details: nil do
+  @doc """
+  Check if the connection is secure or not.
+  """
+  @spec secure?(t) :: boolean
   def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.TCP) do
     false
   end
@@ -15,6 +19,10 @@ defrecord Reagent.Connection, socket: nil, id: nil, pool: nil, listener: nil, de
     true
   end
 
+  @doc """
+  Get the SSL next negotiated protocol.
+  """
+  @spec negotiated_protocol(t) :: nil | String.t
   def negotiated_protocol(__MODULE__[socket: socket] = self) do
     if secure?(self) do
       socket |> Socket.SSL.negotiated_protocol
