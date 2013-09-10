@@ -304,7 +304,7 @@ defmodule Reagent do
 
         listener = Seq.map(acceptors, fn
           ^pid ->
-            listener.module.start_link(Process.self, listener.acceptors(length(acceptors)))
+            Reagent.Behaviour.start_link(Process.self, listener.acceptors(length(acceptors)))
 
           acceptor ->
             acceptor
