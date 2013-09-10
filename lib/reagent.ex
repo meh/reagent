@@ -215,6 +215,10 @@ defmodule Reagent do
     { :reply, listeners[listener] || 0, _state }
   end
 
+  def handle_info({ :EXIT, pid, reason }, _state) when pid == self do
+    { :stop, reason, _state }
+  end
+
   # some monitored process died, most likely a connection
   def handle_info({ :EXIT, pid, _reason }, State[listeners: listeners, connections: connections, waiting: waiting, count: count] = state) do
     case connections |> Dict.get(pid) do
