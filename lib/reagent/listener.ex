@@ -6,7 +6,7 @@
 #
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-defrecord Reagent.Listener, socket: nil, id: nil, pool: nil, module: nil, address: nil, port: nil, secure: nil, acceptors: 1, options: [], details: nil do
+defrecord Reagent.Listener, socket: nil, id: nil, pool: nil, module: nil, address: nil, port: nil, secure: nil, acceptors: 1, options: [], env: nil do
   @doc """
   Check if the connection is secure or not.
   """

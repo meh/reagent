@@ -84,6 +84,26 @@ defmodule Reagent do
     :gen_server.call(pool, { :count, listener })
   end
 
+  @spec set(pid, term) :: none
+  def set(pool, env) do
+    :gen_server.call(pool, { :set, env })
+  end
+
+  @spec set(pid, Listener.t | reference, term) :: none
+  def set(pool, listener, env) do
+    :gen_server.call(pool, { :set, listener, env })
+  end
+
+  @spec get(pid) :: term
+  def get(pool) do
+    :gen_server.call(pool, :get)
+  end
+
+  @spec get(pid, Listener.t | reference) :: term
+  def get(pool, listener) do
+    :gen_server.call(pool, { :get, listener })
+  end
+
   use GenServer.Behaviour
 
   alias Reagent.Listener
@@ -92,7 +112,8 @@ defmodule Reagent do
   alias Data.Seq
   alias Data.Dict
 
-  defrecord State, options: nil, listeners: HashDict.new, connections: HashDict.new, count: HashDict.new, waiting: HashDict.new
+  defrecord State, options: nil, listeners: HashDict.new,
+    connections: HashDict.new, count: HashDict.new, waiting: HashDict.new
 
   def init([options, listeners]) do
     if Seq.first(listeners) |> is_tuple do
@@ -181,23 +202,29 @@ defmodule Reagent do
 
   # makes the caller wait in case the maximum connections threshold has been
   # reached, must be called with :infinity timeout or shit hits the fan
-  def handle_call({ :wait, Listener[] = listener }, from, State[options: options, count: listeners, waiting: waiting] = state) do
+  def handle_call({ :wait, listener }, from, State[options: options, listeners: listeners, count: counted, waiting: waiting] = state) do
+    unless listener |> is_reference do
+      listener = listener.id
+    end
+
+    listener = listeners[listener]
+
     cond do
       # max pool wide connections reached
-      options[:max_connections] && listeners[:total] || 0 >= options[:max_connections] ->
+      options[:max_connections] && counted[:total] || 0 >= options[:max_connections] ->
         waiting = waiting |> Dict.update(listener.id, [], &[from | &1])
 
         { :noreply, state.waiting(waiting) }
 
       # max listener specific connections number reached
-      listener.options[:max_connections] && listeners[listener.id] || 0 >= listener.options[:max_connections] ->
+      listener.options[:max_connections] && counted[listener.id] || 0 >= listener.options[:max_connections] ->
         waiting = waiting |> Dict.update(listener.id, [], &[from | &1])
 
         { :noreply, state.waiting(waiting) }
 
       # all good, keep going
       true ->
-        { :reply, :ok, state }
+        { :reply, listener, state }
     end
   end
 
@@ -215,6 +242,37 @@ defmodule Reagent do
     { :reply, listeners[listener] || 0, _state }
   end
 
+  def handle_call({ :set, env }, _from, State[options: options, listeners: listeners] = state) do
+    state = options |> Dict.put(:env, env) |> state.options
+    state = Enum.map(listeners, fn { id, Listener[] = listener } ->
+      { id, listener.env(env) }
+    end) |> state.listeners
+
+    { :reply, :ok, state }
+  end
+
+  def handle_call({ :set, listener, env }, _from, State[listeners: listeners] = state) do
+    unless listener |> is_reference do
+      listener = listener.id
+    end
+
+    state = listeners |> Dict.update(listener, &(&1.env(env))) |> state.listeners
+
+    { :reply, :ok, state }
+  end
+
+  def handle_call(:get, _from, State[options: options] = _state) do
+    { :reply, options[:env], _state }
+  end
+
+  def handle_call({ :get, listener }, _from, State[listeners: listeners] = _state) do
+    unless listener |> is_reference do
+      listener = listener.id
+    end
+
+    { :reply, listeners[listener].env, _state }
+  end
+
   # some monitored process died, most likely a connection
   def handle_info({ :EXIT, pid, _reason }, State[listeners: listeners, connections: connections, waiting: waiting, count: count] = state) do
     case connections |> Dict.get(pid) do
@@ -225,7 +283,7 @@ defmodule Reagent do
 
         case waiting[id] do
           [wait | rest] ->
-            :gen_server.reply(wait, :ok)
+            :gen_server.reply(wait, listeners[id])
 
             waiting = waiting |> Dict.put(id, rest)
 

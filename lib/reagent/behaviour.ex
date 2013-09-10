@@ -28,14 +28,14 @@ defmodule Reagent.Behaviour do
   defcallback handle(Connection.t) :: :ok | { :error, term }
 
   @doc false
-  def start_link(pool, Listener[module: module] = listener) do
+  def start_link(pool, listener) do
     Process.spawn_link __MODULE__, :run, [pool, listener]
   end
 
   @doc false
-  def run(pool, Listener[module: module] = listener) do
+  def run(pool, Listener[id: id, module: module]) do
     # wait for the max connections limit to be fulfilled
-    :gen_server.call(pool, { :wait, listener }, :infinity)
+    listener = :gen_server.call(pool, { :wait, id }, :infinity)
 
     case module.accept(listener) do
       { :ok, socket } ->
