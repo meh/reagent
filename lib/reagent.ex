@@ -252,7 +252,7 @@ defmodule Reagent do
             acceptor
         end) |> listener.acceptors
 
-        state = listeners |> Dict.put(id, listener)
+        state = state.listeners(listeners |> Dict.put(id, listener))
     end
 
     { :noreply, state }
