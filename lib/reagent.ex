@@ -217,40 +217,42 @@ defmodule Reagent do
 
   # some monitored process died, most likely a connection
   def handle_info({ :EXIT, pid, _reason }, State[listeners: listeners, connections: connections, waiting: waiting, count: count] = state) do
-    if Connection[listener: Listener[id: id]] = connections |> Dict.get(pid) do
-      count       = count |> Dict.update(id, &(&1 - 1))
-      count       = count |> Dict.update(:total, &(&1 - 1))
-      connections = connections |> Dict.delete(pid)
+    case connections |> Dict.get(pid) do
+      Connection[listener: Listener[id: id]] ->
+        count       = count |> Dict.update(id, &(&1 - 1))
+        count       = count |> Dict.update(:total, &(&1 - 1))
+        connections = connections |> Dict.delete(pid)
 
-      case waiting[id] do
-        [wait | rest] ->
-          :gen_server.reply(wait, :ok)
+        case waiting[id] do
+          [wait | rest] ->
+            :gen_server.reply(wait, :ok)
 
-          waiting = waiting |> Dict.put(id, rest)
+            waiting = waiting |> Dict.put(id, rest)
 
-        _ ->
-          nil
-      end
-
-      state = state.count(count)
-      state = state.connections(connections)
-      state = state.waiting(waiting)
-    else
-      listener = Listener[id: id, acceptors: acceptors] = Seq.find_value listeners, fn { _, Listener[acceptors: acceptors] = listener } ->
-        if Seq.member?(acceptors, pid) do
-          listener
+          _ ->
+            nil
         end
-      end
 
-      listener = Seq.map(acceptors, fn
-        ^pid ->
-          listener.module.start_link(Process.self, listener.acceptors(length(acceptors)))
+        state = state.count(count)
+        state = state.connections(connections)
+        state = state.waiting(waiting)
 
-        acceptor ->
-          acceptor
-      end) |> listener.acceptors
+      nil ->
+        listener = Listener[id: id, acceptors: acceptors] = Seq.find_value listeners, fn { _, Listener[acceptors: acceptors] = listener } ->
+          if Seq.member?(acceptors, pid) do
+            listener
+          end
+        end
 
-      state = listeners |> Dict.put(id, listener)
+        listener = Seq.map(acceptors, fn
+          ^pid ->
+            listener.module.start_link(Process.self, listener.acceptors(length(acceptors)))
+
+          acceptor ->
+            acceptor
+        end) |> listener.acceptors
+
+        state = listeners |> Dict.put(id, listener)
     end
 
     { :noreply, state }
