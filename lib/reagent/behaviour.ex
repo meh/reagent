@@ -12,48 +12,66 @@ defmodule Reagent.Behaviour do
   alias Reagent.Listener
   alias Reagent.Connection
 
-  defmacro __using__(_opts) do
-    quote location: :keep do
-      @behaviour unquote(__MODULE__)
+  @doc """
+  Accept a client connection from the listener.
+  """
+  defcallback accept(Listener.t) :: { :ok, Socket.t } | { :error, term }
 
-      @doc false
-      def start_link(pool, listener) do
-        Process.spawn_link __MODULE__, :run, [pool, listener]
-      end
+  @doc """
+  Start the process that will handle the connection, either define this or `handle/1`.
+  """
+  defcallback start(Connection.t) :: { :ok, pid } | { :error, term }
 
-      @doc false
-      def run(pool, listener) do
-        # wait for the max connections limit to be fulfilled
-        :gen_server.call(pool, { :wait, listener }, :infinity)
+  @doc """
+  Handle the connection, either define this or `start/1`.
+  """
+  defcallback handle(Connection.t) :: :ok | { :error, term }
 
-        case accept(listener) do
-          { :ok, socket } ->
-            conn = Connection[id: make_ref, pool: pool, listener: listener, socket: socket]
+  @doc false
+  def start_link(pool, Listener[module: module] = listener) do
+    Process.spawn_link __MODULE__, :run, [pool, listener]
+  end
 
-            case start(conn) do
-              { :ok, pid } ->
-                # if it's linked bad things will happen
-                Process.unlink(pid)
+  @doc false
+  def run(pool, Listener[module: module] = listener) do
+    # wait for the max connections limit to be fulfilled
+    :gen_server.call(pool, { :wait, listener }, :infinity)
 
-                # set the new pid as owner of the socket
-                socket |> Socket.process!(pid)
+    case module.accept(listener) do
+      { :ok, socket } ->
+        conn = Connection[id: make_ref, pool: pool, listener: listener, socket: socket]
 
-                # tell the pool we accepted a connection so it can start monitoring it
-                :gen_server.call pool, { :accepted, conn, pid }
+        case module.start(conn) do
+          { :ok, pid } ->
+            # if it's linked bad things will happen
+            Process.unlink(pid)
 
-                # send the ack to the pid
-                pid <- { Reagent, :ack }
+            # set the new pid as owner of the socket
+            socket |> Socket.process!(pid)
 
-              { :error, _ } = error ->
-                exit error
-            end
+            # tell the pool we accepted a connection so it can start monitoring it
+            :gen_server.call pool, { :accepted, conn, pid }
+
+            # send the ack to the pid
+            pid <- { Reagent, :ack }
 
           { :error, _ } = error ->
             exit error
         end
 
-        run(pool, listener)
-      end
+      { :error, _ } = error ->
+        exit error
+    end
+
+    run(pool, listener)
+  end
+
+  @doc """
+  Uses the reagent behaviour and defines the default callbacks.
+  """
+  defmacro __using__(_opts) do
+    quote location: :keep do
+      @behaviour unquote(__MODULE__)
 
       def accept(Listener[socket: socket]) do
         socket |> Socket.accept(automatic: false)
@@ -78,19 +96,4 @@ defmodule Reagent.Behaviour do
       defoverridable handle: 1
     end
   end
-
-  @doc """
-  Accept a client connection from the listener.
-  """
-  defcallback accept(Listener.t) :: { :ok, Socket.t } | { :error, term }
-
-  @doc """
-  Start the process that will handle the connection, either define this or `handle/1`.
-  """
-  defcallback start(Connection.t) :: { :ok, pid } | { :error, term }
-
-  @doc """
-  Handle the connection, either define this or `start/1`.
-  """
-  defcallback handle(Connection.t) :: :ok | { :error, term }
 end

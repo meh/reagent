@@ -137,7 +137,7 @@ defmodule Reagent do
         { :ok, socket } ->
           listener = listener.socket(socket)
           listener = listener.acceptors(Seq.map(1 .. listener.acceptors, fn _ ->
-            listener.module.start_link(Process.self, listener)
+            Reagent.Behaviour.start_link(Process.self, listener)
           end))
 
           { :ok, listener }
