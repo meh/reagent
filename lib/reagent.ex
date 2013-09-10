@@ -243,7 +243,7 @@ defmodule Reagent do
 
       nil ->
         listener = Listener[id: id, acceptors: acceptors] = Seq.find_value listeners, fn { _, Listener[acceptors: acceptors] = listener } ->
-          if Seq.member?(acceptors, pid) do
+          if Seq.contains?(acceptors, pid) do
             listener
           end
         end
