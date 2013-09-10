@@ -171,21 +171,8 @@ defmodule Reagent do
     end
   end
 
-  # adds a new listener at runtime
-  def handle_call({ :listen, listener }, _from, State[options: options, listeners: listeners] = state) do
-    case create(options, listener) do
-      { :ok, listener } ->
-        listeners = listeners |> Dict.put(listener.id, listener)
-
-        { :reply, :ok, state.listeners(listeners) }
-
-      { :error, _ } = error ->
-        { :reply, error, state }
-    end
-  end
-
   # accepts a new connection, as long as the pid is still alive
-  def handle_call({ :accepted, Connection[listener: Listener[id: id]] = conn, pid }, _from, State[connections: connections, count: count] = state) do
+  def handle_cast({ :accepted, Connection[listener: Listener[id: id]] = conn, pid }, State[connections: connections, count: count] = state) do
     if Process.alive?(pid) do
       Process.link pid
 
@@ -197,7 +184,20 @@ defmodule Reagent do
       state = state.connections(connections)
     end
 
-    { :reply, :ok, state }
+    { :noreply, state }
+  end
+
+  # adds a new listener at runtime
+  def handle_call({ :listen, listener }, _from, State[options: options, listeners: listeners] = state) do
+    case create(options, listener) do
+      { :ok, listener } ->
+        listeners = listeners |> Dict.put(listener.id, listener)
+
+        { :reply, :ok, state.listeners(listeners) }
+
+      { :error, _ } = error ->
+        { :reply, error, state }
+    end
   end
 
   # makes the caller wait in case the maximum connections threshold has been

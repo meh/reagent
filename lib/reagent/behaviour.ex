@@ -49,11 +49,11 @@ defmodule Reagent.Behaviour do
             # set the new pid as owner of the socket
             socket |> Socket.process!(pid)
 
-            # tell the pool we accepted a connection so it can start monitoring it
-            :gen_server.call pool, { :accepted, conn, pid }
-
             # send the ack to the pid
             pid <- { Reagent, :ack }
+
+            # tell the pool we accepted a connection so it can start monitoring it
+            :gen_server.cast pool, { :accepted, conn, pid }
 
           { :error, _ } = error ->
             exit error
