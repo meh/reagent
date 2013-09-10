@@ -95,8 +95,6 @@ defmodule Reagent do
   defrecord State, options: nil, listeners: HashDict.new, connections: HashDict.new, count: HashDict.new, waiting: HashDict.new
 
   def init([options, listeners]) do
-    Process.flag :trap_exit, true
-
     if Seq.first(listeners) |> is_tuple do
       listeners = [listeners]
     end
@@ -116,6 +114,8 @@ defmodule Reagent do
       listeners = HashDict.new listeners, fn { :ok, listener } ->
         { listener.id, listener }
       end
+
+      Process.flag :trap_exit, true
 
       { :ok, State[options: options, listeners: listeners] }
     end
@@ -213,10 +213,6 @@ defmodule Reagent do
     end
 
     { :reply, listeners[listener] || 0, _state }
-  end
-
-  def handle_info({ :EXIT, pid, reason }, _state) when pid == self do
-    { :stop, reason, _state }
   end
 
   # some monitored process died, most likely a connection
