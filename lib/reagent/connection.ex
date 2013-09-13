@@ -28,6 +28,14 @@ defmodule Reagent.Connection do
   end
 
   @doc """
+  Get the listener of the connection.
+  """
+  @spec listener(t) :: Reagent.Listener.t
+  def listener(connection(listener: listener)) do
+    listener
+  end
+
+  @doc """
   Get the environment for the connection.
   """
   @spec env(t) :: term
