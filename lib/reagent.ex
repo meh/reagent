@@ -6,28 +6,44 @@
 #
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-
-# raw: 9213
-# ranch: 8504
-# reagent: 5377
-
 defmodule Reagent do
+  @doc """
+  Start a listener with the given module and the given descriptor.
+  """
+  @spec start(module, Keyword.t) :: { :ok, pid } | { :error, term }
   def start(module, descriptor) do
     start(Keyword.merge(descriptor, module: module))
   end
 
+  @doc """
+  Start a listener with the given descriptor.
+  """
+  @spec start(Keyword.t) :: { :ok, pid } | { :error, term }
   def start(descriptor) do
     Reagent.Listener.start(descriptor)
   end
 
+  @doc """
+  Start a listener with the given module and the given descriptor and link the
+  process.
+  """
+  @spec start_link(module, Keyword.t) :: { :ok, pid } | { :error, term }
   def start_link(module, descriptor) do
     start_link(Keyword.merge(descriptor, module: module))
   end
 
+  @doc """
+  Start a listener with the given descriptor and link the process.
+  """
+  @spec start_link(Keyword.t) :: { :ok, pid } | { :error, term }
   def start_link(descriptor) do
     Reagent.Listener.start_link(descriptor)
   end
 
+  @doc """
+  Wait for the accept ack.
+  """
+  @spec wait(timeout) :: :ok | { :timeout, timeout }
   def wait(timeout // :infinity) do
     receive do
       { Reagent, :ack } ->
