@@ -83,14 +83,17 @@ defmodule Reagent.Listener do
     socket
   end
 
+  @doc false
   def start(descriptor) do
     :gen_server.start __MODULE__, descriptor, []
   end
 
+  @doc false
   def start_link(descriptor) do
     :gen_server.start_link __MODULE__, descriptor, []
   end
 
+  @doc false
   def init(descriptor) do
     if descriptor[:profile] do
       Reagent.Profile.start
@@ -145,10 +148,12 @@ defmodule Reagent.Listener do
     options |> Keyword.merge(secure) |> Keyword.merge(mode: :passive, automatic: false)
   end
 
+  @doc false
   def terminate(_, listener(socket: socket)) do
     socket |> Socket.close
   end
 
+  @doc false
   def handle_call(:env, _from, listener(env: env) = listener) do
     { :reply, env, listener }
   end
@@ -167,6 +172,7 @@ defmodule Reagent.Listener do
     end
   end
 
+  @doc false
   def handle_cast({ :acceptors, number }, listener(acceptors: acceptors) = listener) when number > 0 do
     pids = Enum.map 1 .. number, fn _ ->
       Process.spawn_link __MODULE__, :acceptor, [listener]
@@ -189,6 +195,7 @@ defmodule Reagent.Listener do
     { :noreply, listener(listener, connections: Dict.put(connections, Process.monitor(pid), conn)) }
   end
 
+  @doc false
   def handle_info({ :EXIT, pid, reason }, listener(acceptors: acceptors) = listener) do
     acceptors = Set.delete(acceptors, pid) |> Set.add(Process.spawn_link(__MODULE__, :acceptor, [listener]))
     listener  = listener(listener, acceptors: acceptors)
