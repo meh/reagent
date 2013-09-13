@@ -32,40 +32,6 @@ defmodule Reagent.Behaviour do
     Process.spawn_link __MODULE__, :run, [pool, listener]
   end
 
-  @doc false
-  def run(pool, Listener[id: id, module: module]) do
-    # wait for the max connections limit to be fulfilled
-    listener = :gen_server.call(pool, { :wait, id }, :infinity)
-
-    case module.accept(listener) do
-      { :ok, socket } ->
-        conn = Connection[id: make_ref, pool: pool, listener: listener, socket: socket]
-
-        case module.start(conn) do
-          { :ok, pid } ->
-            # if it's linked bad things will happen
-            Process.unlink(pid)
-
-            # set the new pid as owner of the socket
-            socket |> Socket.process!(pid)
-
-            # send the ack to the pid
-            pid <- { Reagent, :ack }
-
-            # tell the pool we accepted a connection so it can start monitoring it
-            :gen_server.cast pool, { :accepted, conn, pid }
-
-          { :error, _ } = error ->
-            exit error
-        end
-
-      { :error, _ } = error ->
-        exit error
-    end
-
-    run(pool, listener)
-  end
-
   @doc """
   Uses the reagent behaviour and defines the default callbacks.
   """
@@ -73,18 +39,14 @@ defmodule Reagent.Behaviour do
     quote location: :keep do
       @behaviour unquote(__MODULE__)
 
-      def accept(Listener[socket: socket]) do
-        socket |> Socket.accept(automatic: false)
+      def accept(listener) do
+        listener.socket |> Socket.accept(automatic: false)
       end
 
       defoverridable accept: 1
 
       def start(conn) do
-        { :ok, Process.spawn fn ->
-          Reagent.wait
-
-          handle(conn)
-        end }
+        :ok
       end
 
       defoverridable start: 1

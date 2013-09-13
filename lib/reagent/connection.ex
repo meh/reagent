@@ -6,16 +6,40 @@
 #
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-defrecord Reagent.Connection, socket: nil, id: nil, pool: nil, listener: nil, env: nil do
+defmodule Reagent.Connection do
+  @opaque t :: record
+
+  defrecordp :connection, __MODULE__, socket: nil, id: nil, listener: nil
+
+  def new(descriptor) do
+    id       = make_ref
+    socket   = Keyword.fetch! descriptor, :socket
+    listener = Keyword.fetch! descriptor, :listener
+
+    connection(socket: socket, id: id, listener: listener)
+  end
+
+  @doc """
+  Get the id of the connection.
+  """
+  @spec id(t) :: reference
+  def id(connection(id: id)) do
+    id
+  end
+
+  def env(connection(id: id, listener: listener)) do
+    Reagent.Listener.env(listener, id)
+  end
+
   @doc """
   Check if the connection is secure or not.
   """
   @spec secure?(t) :: boolean
-  def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.TCP) do
+  def secure?(connection(socket: socket)) when is_record(socket, Socket.TCP) do
     false
   end
 
-  def secure?(__MODULE__[socket: socket]) when is_record(socket, Socket.SSL) do
+  def secure?(connection(socket: socket)) when is_record(socket, Socket.SSL) do
     true
   end
 
@@ -23,7 +47,7 @@ defrecord Reagent.Connection, socket: nil, id: nil, pool: nil, listener: nil, en
   Get the SSL next negotiated protocol.
   """
   @spec negotiated_protocol(t) :: nil | String.t
-  def negotiated_protocol(__MODULE__[socket: socket] = self) do
+  def negotiated_protocol(connection(socket: socket) = self) do
     if secure?(self) do
       socket |> Socket.SSL.negotiated_protocol
     end

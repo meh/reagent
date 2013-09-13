@@ -18,6 +18,7 @@ defmodule Reagent.Mixfile do
   defp deps do
     [ { :socket, github: "meh/elixir-socket" },
       { :datastructures, github: "meh/elixir-datastructures" },
+      { :exts, github: "meh/exts" },
       { :derp, github: "meh/derp" } ]
   end
 end
