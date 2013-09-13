@@ -25,6 +25,14 @@ defmodule Reagent.Listener do
   end
 
   @doc """
+  Get the port number the listener is listening on.
+  """
+  @spec port(t) :: :inet.port_number
+  def port(listener(port: port)) do
+    port
+  end
+
+  @doc """
   Get the environment for the listener.
   """
   @spec env(pid | t) :: term
