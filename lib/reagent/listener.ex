@@ -196,7 +196,7 @@ defmodule Reagent.Listener do
   end
 
   @doc false
-  def handle_info({ :EXIT, pid, reason }, listener(acceptors: acceptors) = listener) do
+  def handle_info({ :EXIT, pid, _reason }, listener(acceptors: acceptors) = listener) do
     acceptors = Set.delete(acceptors, pid) |> Set.add(Process.spawn_link(__MODULE__, :acceptor, [listener]))
     listener  = listener(listener, acceptors: acceptors)
 
