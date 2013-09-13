@@ -27,8 +27,20 @@ defmodule Reagent.Connection do
     id
   end
 
+  @doc """
+  Get the environment for the connection.
+  """
+  @spec env(t) :: term
   def env(connection(id: id, listener: listener)) do
-    Reagent.Listener.env(listener, id)
+    Reagent.Listener.env_for(listener, id)
+  end
+
+  @doc """
+  Set the environment for the connection.
+  """
+  @spec env(t, term) :: term
+  def env(connection(id: id, listener: listener), value) do
+    Reagent.Listener.env_for(listener, id, value)
   end
 
   @doc """

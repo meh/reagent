@@ -24,22 +24,44 @@ defmodule Reagent.Listener do
     id
   end
 
+  @doc """
+  Get the environment for the listener.
+  """
   @spec env(pid | t) :: term
-  def env(id) when id |> is_pid do
-    :gen_server.call(id, :env) |> Dict.get(id)
-  end
-
   def env(listener(id: id, env: table)) do
     table |> Dict.get(id)
   end
 
-  @spec env(pid | t, reference) :: term
-  def env(id, conn) when id |> is_pid do
-    :gen_server.call(id, :env) |> Dict.get(conn)
+  def env(id) do
+    :gen_server.call(id, :env) |> Dict.get(id)
   end
 
-  def env(listener(env: table), id) do
-    table |> Dict.get(id)
+  @doc """
+  Set the environment for the listener.
+  """
+  @spec env(pid | t, reference | term) :: term
+  def env(listener(id: id, env: table), value) do
+    table |> Dict.put(id, value)
+
+    value
+  end
+
+  def env(id, value) do
+    :gen_server.call(id, :env) |> Dict.put(id, value)
+
+    value
+  end
+
+  @doc false
+  def env_for(listener(env: table), conn) do
+    table |> Dict.get(conn)
+  end
+
+  @doc false
+  def env_for(listener(env: table), conn, value) do
+    table |> Dict.put(conn, value)
+
+    value
   end
 
   @doc """
