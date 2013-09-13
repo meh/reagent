@@ -18,18 +18,17 @@ end
 
 When you want to start a server running the defined reagent, you have to call
 `Reagent.start`. It takes as first parameter the module implementing the
-behaviour and as second parameter a list of listener descriptors or a single
-listener descriptor.
+behaviour and as second parameter a listener descriptor.
 
-Listener descriptors contain the definition of the listener, including address,
-port, whether it's secure or not and other `:inet.setopts` options.
+Listener descriptors contain the definition of the listener, including port,
+whether they're secure or not, other socket options and starting environment.
 
 Reagent behaviour
 -----------------
 A reagent to do anything useful as to either implement `handle/1` or `start/1`.
 
-`handle/1` is called by the default `start/1` and it gets called as the entry
-point of an internally created process. It gets called with a
+`handle/1` is called by the default `start/1` and it gets called as a
+replacement for the acceptor process. It gets called with a
 `Reagent.Connection` record.
 
 This is usually useful to implement simple protocols when you don't need a full
