@@ -1,6 +1,6 @@
-[ "datastructures": {:git, "git://github.com/meh/elixir-datastructures.git", "7e7f32195e6fda207f11e80f1088340e9719edd5", []},
+[ "datastructures": {:git, "git://github.com/meh/elixir-datastructures.git", "502ecde77c46ec1d36bb51871f92b9be58aab7a6", []},
   "derp": {:git, "git://github.com/meh/derp.git", "6a2ebab02750b5526d84abb14db0f65c68088787", []},
   "exts": {:git, "git://github.com/meh/exts.git", "5acc5277caf8a55d05afc1a186bcb126db73a39c", []},
   "finalizer": {:git, "git://github.com/meh/elixir-finalizer.git", "9c38d9145824a46c66f1a010e137a953a6c78e04", []},
   "resource": {:git, "git://github.com/tonyrog/resource.git", "37264ec960263cec0df8d6db0da818297b8d5771", []},
-  "socket": {:git, "git://github.com/meh/elixir-socket.git", "57de939450dc76b86e1895c58c396362a92f2588", []} ]
+  "socket": {:git, "git://github.com/meh/elixir-socket.git", "73eb1f836f6531b9125e8098c19c55d0bb9058ab", []} ]
