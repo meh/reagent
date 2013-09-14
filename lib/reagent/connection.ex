@@ -11,6 +11,7 @@ defmodule Reagent.Connection do
 
   defrecordp :connection, __MODULE__, socket: nil, id: nil, listener: nil
 
+  @doc false
   def new(descriptor) do
     id       = make_ref
     socket   = Keyword.fetch! descriptor, :socket
