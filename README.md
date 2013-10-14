@@ -25,7 +25,7 @@ whether they're secure or not, other socket options and starting environment.
 
 Reagent behaviour
 -----------------
-A reagent to do anything useful as to either implement `handle/1` or `start/1`.
+A reagent to do anything useful has to either implement `handle/1` or `start/1`.
 
 `handle/1` is called by the default `start/1` and it gets called as a
 replacement for the acceptor process. It gets called with a
