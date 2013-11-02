@@ -4,7 +4,7 @@ defmodule Reagent.Mixfile do
   def project do
     [ app: :reagent,
       version: "0.0.1",
-      elixir: "~> 0.10.3-dev",
+      elixir: "~> 0.10.3-dev or ~> 0.11.0",
       deps: deps ]
   end
 
