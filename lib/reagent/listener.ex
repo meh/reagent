@@ -215,6 +215,7 @@ defmodule Reagent.Listener do
     connection  = Dict.get(connections, ref)
     connections = Dict.delete(connections, ref)
 
+    connection |> Socket.close
     Dict.delete(table, connection.id)
 
     case Queue.deq(waiting) do
