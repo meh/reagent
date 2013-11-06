@@ -33,6 +33,14 @@ defmodule Reagent.Listener do
   end
 
   @doc """
+  Get the options for the listener.
+  """
+  @spec options(t) :: Keyword.t
+  def options(listener(options: options)) do
+    options
+  end
+
+  @doc """
   Get the environment for the listener.
   """
   @spec env(pid | t) :: term
