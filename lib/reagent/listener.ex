@@ -251,7 +251,7 @@ defmodule Reagent.Listener do
 
           { :ok, pid } ->
             socket |> Socket.process!(pid)
-            pid <- { Reagent, :ack }
+            pid |> send { Reagent, :ack }
 
             :gen_server.cast id, { :accepted, pid, conn }
 
