@@ -44,7 +44,7 @@ defmodule Reagent do
   Wait for the accept ack.
   """
   @spec wait(timeout) :: :ok | { :timeout, timeout }
-  def wait(timeout // :infinity) do
+  def wait(timeout \\ :infinity) do
     receive do
       { Reagent, :ack } ->
         :ok
