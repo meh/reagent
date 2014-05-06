@@ -7,9 +7,9 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 defmodule Reagent.Connection do
-  @opaque t :: record
+  alias __MODULE__, as: C
 
-  defrecordp :connection, __MODULE__, socket: nil, id: nil, listener: nil
+  defstruct [:socket, :id, :listener]
 
   @doc false
   def new(descriptor) do
@@ -17,96 +17,77 @@ defmodule Reagent.Connection do
     socket   = Keyword.fetch! descriptor, :socket
     listener = Keyword.fetch! descriptor, :listener
 
-    connection(socket: socket, id: id, listener: listener)
-  end
-
-  @doc """
-  Get the id of the connection.
-  """
-  @spec id(t) :: reference
-  def id(connection(id: id)) do
-    id
-  end
-
-  @doc """
-  Get the listener of the connection.
-  """
-  @spec listener(t) :: Reagent.Listener.t
-  def listener(connection(listener: listener)) do
-    listener
+    %C{socket: socket, id: id, listener: listener}
   end
 
   @doc """
   Get the environment for the connection.
   """
   @spec env(t) :: term
-  def env(connection(id: id, listener: listener)) do
-    Reagent.Listener.env_for(listener, id)
+  def env(self) do
+    Reagent.Listener.env_for(self.listener, self.id)
   end
 
   @doc """
   Set the environment for the connection.
   """
   @spec env(t, term) :: term
-  def env(connection(id: id, listener: listener), value) do
-    Reagent.Listener.env_for(listener, id, value)
+  def env(self, value) do
+    Reagent.Listener.env_for(self.listener, self.id, value)
   end
 
   @doc """
   Check if the connection is secure or not.
   """
   @spec secure?(t) :: boolean
-  def secure?(connection(socket: socket)) when is_record(socket, Socket.TCP) do
-    false
-  end
-
-  def secure?(connection(socket: socket)) when is_record(socket, Socket.SSL) do
-    true
-  end
+  def secure?(%C{socket: socket}) when socket |> is_port, do: false
+  def secure?(%C{socket: socket}) when socket |> is_record(:sslsocket), do: true
 
   @doc """
   Get the SSL next negotiated protocol.
   """
   @spec negotiated_protocol(t) :: nil | String.t
-  def negotiated_protocol(connection(socket: socket) = self) do
-    if secure?(self) do
-      socket |> Socket.SSL.negotiated_protocol
-    end
+  def negotiated_protocol(%C{socket: socket}) when socket |> is_record(:sslsocket) do
+    socket |> Socket.SSL.negotiated_protocol
   end
-end
 
-defimpl Socket.Protocol, for: Reagent.Connection do
-  use Socket.Helpers
+  def negotiated_protocol(_) do
+    nil
+  end
 
-  defwrap equal?(self, other)
+  defimpl Socket.Protocol do
+    use Socket.Helpers
 
-  defwrap accept(self)
-  defwrap accept(self, options)
+    defwrap equal?(self, other)
 
-  defwrap options(self, options)
-  defwrap packet(self, type)
-  defwrap process(self, pid)
+    defwrap accept(self)
+    defwrap accept(self, options)
 
-  defwrap active(self)
-  defwrap active(self, mode)
-  defwrap passive(self)
+    defwrap options(self, options)
+    defwrap packet(self, type)
+    defwrap process(self, pid)
 
-  defwrap local(self)
-  defwrap remote(self)
+    defwrap active(self)
+    defwrap active(self, mode)
+    defwrap passive(self)
 
-  defwrap close(self)
-end
+    defwrap local(self)
+    defwrap remote(self)
 
-defimpl Socket.Stream.Protocol, for: Reagent.Connection do
-  use Socket.Helpers
+    defwrap close(self)
+  end
 
-  defwrap send(self, data)
-  defwrap file(self, path, options)
+  defimpl Socket.Stream.Protocol do
+    use Socket.Helpers
 
-  defwrap recv(self)
-  defwrap recv(self, length_or_options)
-  defwrap recv(self, length, options)
+    defwrap send(self, data)
+    defwrap file(self, path, options)
 
-  defwrap shutdown(self)
-  defwrap shutdown(self, how)
+    defwrap recv(self)
+    defwrap recv(self, length_or_options)
+    defwrap recv(self, length, options)
+
+    defwrap shutdown(self)
+    defwrap shutdown(self, how)
+  end
 end

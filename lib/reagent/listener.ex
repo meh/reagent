@@ -7,45 +7,17 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 defmodule Reagent.Listener do
-  alias Data.Set
-  alias Data.Dict
-  alias Data.Queue
+  alias __MODULE__, as: L
 
-  @opaque t :: record
-
-  defrecordp :listener, __MODULE__, socket: nil, id: nil, module: nil, port: nil, secure: nil, options: [],
+  defstruct socket: nil, id: nil, module: nil, port: nil, secure: nil, options: [],
     env: nil, acceptors: nil, connections: nil, waiting: nil
-
-  @doc """
-  Get the id of the listener.
-  """
-  @spec id(t) :: pid
-  def id(listener(id: id)) do
-    id
-  end
-
-  @doc """
-  Get the port number the listener is listening on.
-  """
-  @spec port(t) :: :inet.port_number
-  def port(listener(port: port)) do
-    port
-  end
-
-  @doc """
-  Get the options for the listener.
-  """
-  @spec options(t) :: Keyword.t
-  def options(listener(options: options)) do
-    options
-  end
 
   @doc """
   Get the environment for the listener.
   """
   @spec env(pid | t) :: term
-  def env(listener(id: id, env: table)) do
-    table |> Dict.get(id)
+  def env(%L{} = self) do
+    self.env |> Dict.get(self.id)
   end
 
   def env(id) do
@@ -56,8 +28,8 @@ defmodule Reagent.Listener do
   Set the environment for the listener.
   """
   @spec env(pid | t, reference | term) :: term
-  def env(listener(id: id, env: table), value) do
-    table |> Dict.put(id, value)
+  def env(%L{} = self, value) do
+    self.env |> Dict.put(self.id, value)
 
     value
   end
@@ -69,13 +41,13 @@ defmodule Reagent.Listener do
   end
 
   @doc false
-  def env_for(listener(env: table), conn) do
-    table |> Dict.get(conn)
+  def env_for(self, conn) do
+    self.env |> Dict.get(conn)
   end
 
   @doc false
-  def env_for(listener(env: table), conn, value) do
-    table |> Dict.put(conn, value)
+  def env_for(self, conn, value) do
+    self.env |> Dict.put(conn, value)
 
     value
   end
@@ -84,20 +56,15 @@ defmodule Reagent.Listener do
   Check if the connection is secure or not.
   """
   @spec secure?(t) :: boolean
-  def secure?(listener(secure: nil)), do: false
-  def secure?(listener()),            do: true
+  def secure?(%L{secure: nil}), do: false
+  def secure?(%L{}),            do: true
 
   @doc """
   Get the certificate of the listener.
   """
   @spec cert(t) :: String.t
-  def cert(listener(secure: nil)), do: nil
-  def cert(listener(secure: sec)), do: sec[:cert]
-
-  @spec socket(t) :: Socket.t
-  def socket(listener(socket: socket)) do
-    socket
-  end
+  def cert(%L{secure: nil}), do: nil
+  def cert(%L{secure: sec}), do: sec[:cert]
 
   @doc false
   def start(descriptor) do
@@ -118,9 +85,9 @@ defmodule Reagent.Listener do
     id        = Process.self
     module    = Keyword.fetch! descriptor, :module
     port      = Keyword.fetch! descriptor, :port
-    secure    = Keyword.get descriptor, :secure
-    acceptors = Keyword.get descriptor, :acceptors, 100
-    options   = Keyword.get descriptor, :options, []
+    secure    = Keyword.get    descriptor, :secure
+    acceptors = Keyword.get    descriptor, :acceptors, 100
+    options   = Keyword.get    descriptor, :options, []
 
     socket = if secure do
       Socket.SSL.listen port, to_options(options, secure)
@@ -132,20 +99,20 @@ defmodule Reagent.Listener do
       { :ok, socket } ->
         Process.flag :trap_exit, true
 
-        table = Exts.Table.new(automatic: false, access: :public)
-        table |> Dict.put(id, descriptor[:env])
+        dict = Exts.Dict.new(access: :public)
+        dict |> Dict.put(id, descriptor[:env])
 
-        listener = listener(
+        listener = %L{
           socket:      socket,
           id:          id,
           module:      module,
           port:        port,
           secure:      secure,
           options:     options,
-          env:         table,
+          env:         dict,
           acceptors:   HashSet.new,
           connections: HashDict.new,
-          waiting:     Queue.Simple.new)
+          waiting:     :queue.new }
 
         :gen_server.cast Process.self, { :acceptors, acceptors }
 
@@ -165,97 +132,97 @@ defmodule Reagent.Listener do
   end
 
   @doc false
-  def terminate(_, listener(socket: socket)) do
-    socket |> Socket.close
+  def terminate(self, _) do
+    self.socket |> Socket.close
   end
 
   @doc false
-  def handle_call(:env, _from, listener(env: env) = listener) do
+  def handle_call(:env, _from, %L{env: env} = listener) do
     { :reply, env, listener }
   end
 
-  def handle_call(:wait, from, listener(options: options, connections: connections, waiting: waiting) = listener) do
-    case Keyword.fetch(options, :max_connections) do
+  def handle_call(:wait, from, self) do
+    case Keyword.fetch(self.options, :max_connections) do
       :error ->
-        { :reply, :ok, listener }
+        { :reply, :ok, self }
 
       { :ok, max } ->
-        if Data.count(connections) >= max do
-          { :noreply, listener(listener, waiting: Queue.enq(waiting, from)) }
+        if Data.count(self.connections) >= max do
+          { :noreply, %L{self | waiting: :queue.in(from, self.waiting)} }
         else
-          { :reply, :ok, listener }
+          { :reply, :ok, self }
         end
     end
   end
 
   @doc false
-  def handle_cast({ :acceptors, number }, listener(acceptors: acceptors) = listener) when number > 0 do
-    pids = Enum.map 1 .. number, fn _ ->
-      Process.spawn_link __MODULE__, :acceptor, [listener]
-    end
+  def handle_cast({ :acceptors, number }, self) when number > 0 do
+    pids = Enum.map(1 .. number, fn _ ->
+      Process.spawn_link __MODULE__, :acceptor, [self]
+    end) |> Enum.into HashSet.new
 
-    { :noreply, listener(listener, acceptors: Set.union(acceptors, HashSet.new(pids))) }
+    { :noreply, %L{self | acceptors: Set.union(self.acceptors, pids)} }
   end
 
-  def handle_cast({ :acceptors, number }, listener(acceptors: acceptors) = listener) when number < 0 do
-    { keep, drop } = Enum.split(acceptors, -number)
+  def handle_cast({ :acceptors, number }, self) when number < 0 do
+    { keep, drop } = Enum.split(self.acceptors, -number)
 
     Enum.each drop, fn pid ->
       Process.exit pid, :drop
     end
 
-    { :noreply, listener(listener, acceptors: HashSet.new(keep)) }
+    { :noreply, %L{self | acceptors: keep |> Enum.into(HashSet.new)} }
   end
 
-  def handle_cast({ :accepted, pid, conn }, listener(connections: connections) = listener) do
-    { :noreply, listener(listener, connections: Dict.put(connections, Process.monitor(pid), conn)) }
+  def handle_cast({ :accepted, pid, conn }, self) do
+    { :noreply, %L{self | connections: self.connections |> Dict.put(Process.monitor(pid), conn)} }
   end
 
   @doc false
-  def handle_info({ :EXIT, pid, _reason }, listener(acceptors: acceptors) = listener) do
-    acceptors = Set.delete(acceptors, pid) |> Set.add(Process.spawn_link(__MODULE__, :acceptor, [listener]))
-    listener  = listener(listener, acceptors: acceptors)
+  def handle_info({ :EXIT, pid, _reason }, self) do
+    acceptors = self.acceptors |> Set.delete(pid)
+      |> Set.put(Process.spawn_link(__MODULE__, :acceptor, [self]))
 
-    { :noreply, listener }
+    { :noreply, %L{self | acceptors: acceptors } }
   end
 
-  def handle_info({ :DOWN, ref, _type, _object, _info }, listener(connections: connections, waiting: waiting, env: table) = listener) do
-    connection  = Dict.get(connections, ref)
-    connections = Dict.delete(connections, ref)
+  def handle_info({ :DOWN, ref, _type, _object, _info }, self) do
+    connection  = self.connections |> Dict.get(ref)
+    connections = self.connections |> Dict.delete(ref)
 
     connection |> Socket.close
-    Dict.delete(table, connection.id)
+    Dict.delete(self.env, connection.id)
 
-    case Queue.deq(waiting) do
-      { nil, _ } ->
-        { :noreply, listener(listener, connections: connections) }
+    case :queue.out(self.waiting) do
+      { :empty, queue } ->
+        { :noreply, %L{self | connections: connections, waiting: queue} }
 
-      { from, rest } ->
+      { { :value, from }, queue } ->
         :gen_server.reply(from, :ok)
 
-        { :noreply, listener(listener, connections: connections, waiting: rest) }
+        { :noreply, %L{self | connections: connections, waiting: queue} }
     end
   end
 
   @doc false
-  def acceptor(listener(id: id, module: module) = listener) do
-    wait(listener)
+  def acceptor(self) do
+    wait(self)
 
-    case module.accept(listener) do
+    case self.module.accept(self) do
       { :ok, socket } ->
-        conn = Reagent.Connection.new(listener: listener, socket: socket)
+        conn = Reagent.Connection.new(listener: self, socket: socket)
 
-        case module.start(conn) do
+        case self.module.start(conn) do
           :ok ->
-            module.handle(conn)
+            self.module.handle(conn)
 
           { :ok, pid } ->
             socket |> Socket.process!(pid)
             pid |> send { Reagent, :ack }
 
-            :gen_server.cast id, { :accepted, pid, conn }
+            :gen_server.cast self.id, { :accepted, pid, conn }
 
-            acceptor(listener)
+            acceptor(self)
 
           { :error, reason } ->
             exit reason
@@ -266,7 +233,7 @@ defmodule Reagent.Listener do
     end
   end
 
-  defp wait(listener(id: id)) do
-    :gen_server.call id, :wait
+  defp wait(self) do
+    :gen_server.call self.id, :wait
   end
 end

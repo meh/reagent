@@ -40,7 +40,7 @@ defmodule Reagent.Behaviour do
       @behaviour unquote(__MODULE__)
 
       def accept(listener) do
-        listener.socket |> Socket.accept(automatic: false)
+        listener.socket |> Socket.accept
       end
 
       defoverridable accept: 1
