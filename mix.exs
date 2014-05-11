@@ -12,7 +12,7 @@ defmodule Reagent.Mixfile do
 
   # Configuration for the OTP application
   def application do
-    [ applications: [:socket] ]
+    [ applications: [:exts, :socket] ]
   end
 
   defp deps do
