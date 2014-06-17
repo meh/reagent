@@ -12,6 +12,8 @@ defmodule Reagent.Listener do
   defstruct socket: nil, id: nil, module: nil, port: nil, secure: nil, options: [],
     env: nil, acceptors: nil, connections: nil, waiting: nil
 
+  use GenServer
+
   @doc """
   Get the environment for the listener.
   """
@@ -21,7 +23,7 @@ defmodule Reagent.Listener do
   end
 
   def env(id) do
-    :gen_server.call(id, :env) |> Dict.get(id)
+    GenServer.call(id, :env) |> Dict.get(id)
   end
 
   @doc """
@@ -35,7 +37,7 @@ defmodule Reagent.Listener do
   end
 
   def env(id, value) do
-    :gen_server.call(id, :env) |> Dict.put(id, value)
+    GenServer.call(id, :env) |> Dict.put(id, value)
 
     value
   end
@@ -68,12 +70,12 @@ defmodule Reagent.Listener do
 
   @doc false
   def start(descriptor) do
-    :gen_server.start __MODULE__, descriptor, []
+    GenServer.start __MODULE__, descriptor
   end
 
   @doc false
   def start_link(descriptor) do
-    :gen_server.start_link __MODULE__, descriptor, []
+    GenServer.start_link __MODULE__, descriptor
   end
 
   @doc false
@@ -82,7 +84,7 @@ defmodule Reagent.Listener do
       Reagent.Profile.start
     end
 
-    id        = Process.self
+    id        = Kernel.self
     module    = Keyword.fetch! descriptor, :module
     port      = Keyword.fetch! descriptor, :port
     secure    = Keyword.get    descriptor, :secure
@@ -114,7 +116,7 @@ defmodule Reagent.Listener do
           connections: HashDict.new,
           waiting:     :queue.new }
 
-        :gen_server.cast Process.self, { :acceptors, acceptors }
+        GenServer.cast Kernel.self, { :acceptors, acceptors }
 
         { :ok, listener }
 
@@ -158,7 +160,7 @@ defmodule Reagent.Listener do
   @doc false
   def handle_cast({ :acceptors, number }, self) when number > 0 do
     pids = Enum.map(1 .. number, fn _ ->
-      Process.spawn_link __MODULE__, :acceptor, [self]
+      Kernel.spawn_link __MODULE__, :acceptor, [self]
     end) |> Enum.into HashSet.new
 
     { :noreply, %L{self | acceptors: Set.union(self.acceptors, pids)} }
@@ -181,7 +183,7 @@ defmodule Reagent.Listener do
   @doc false
   def handle_info({ :EXIT, pid, _reason }, self) do
     acceptors = self.acceptors |> Set.delete(pid)
-      |> Set.put(Process.spawn_link(__MODULE__, :acceptor, [self]))
+      |> Set.put(Kernel.spawn_link(__MODULE__, :acceptor, [self]))
 
     { :noreply, %L{self | acceptors: acceptors } }
   end
@@ -198,7 +200,7 @@ defmodule Reagent.Listener do
         { :noreply, %L{self | connections: connections, waiting: queue} }
 
       { { :value, from }, queue } ->
-        :gen_server.reply(from, :ok)
+        GenServer.reply(from, :ok)
 
         { :noreply, %L{self | connections: connections, waiting: queue} }
     end
@@ -220,7 +222,7 @@ defmodule Reagent.Listener do
             socket |> Socket.process!(pid)
             pid |> send { Reagent, :ack }
 
-            :gen_server.cast self.id, { :accepted, pid, conn }
+            GenServer.cast self.id, { :accepted, pid, conn }
 
             acceptor(self)
 
@@ -234,6 +236,6 @@ defmodule Reagent.Listener do
   end
 
   defp wait(self) do
-    :gen_server.call self.id, :wait
+    GenServer.call self.id, :wait
   end
 end
