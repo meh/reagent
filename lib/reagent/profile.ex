@@ -9,7 +9,7 @@
 defmodule Reagent.Profile do
   def start do
     :eprof.start
-    :eprof.start_profiling [Process.self]
+    :eprof.start_profiling [Kernel.self]
   end
 
   def stop do
