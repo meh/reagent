@@ -29,7 +29,7 @@ defmodule Reagent.Behaviour do
 
   @doc false
   def start_link(pool, listener) do
-    Process.spawn_link __MODULE__, :run, [pool, listener]
+    Kernel.spawn_link __MODULE__, :run, [pool, listener]
   end
 
   @doc """
