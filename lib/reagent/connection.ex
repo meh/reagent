@@ -11,6 +11,8 @@ defmodule Reagent.Connection do
 
   defstruct [:socket, :id, :listener]
 
+  @opaque t :: %Reagent.Connection{}
+
   require Record
 
   @doc false
