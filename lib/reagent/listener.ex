@@ -12,6 +12,8 @@ defmodule Reagent.Listener do
   defstruct socket: nil, id: nil, module: nil, port: nil, secure: nil, options: [],
     env: nil, acceptors: nil, connections: nil, waiting: nil
 
+  @opaque t :: %Reagent.Listener{}
+
   use GenServer
 
   @doc """
