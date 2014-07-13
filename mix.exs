@@ -3,8 +3,8 @@ defmodule Reagent.Mixfile do
 
   def project do
     [ app:     :reagent,
-      version: "0.1.2",
-      elixir:  "~> 0.14.0",
+      version: "0.1.3",
+      elixir:  "~> 0.14.3",
       deps:    deps,
       package: package,
       description: "You need more reagents to conjure this server" ]
@@ -16,8 +16,8 @@ defmodule Reagent.Mixfile do
   end
 
   defp deps do
-    [ { :socket, "~> 0.2.4" },
-      { :exts,   "~> 0.1.2" } ]
+    [ { :socket, "~> 0.2.6" },
+      { :exts,   "~> 0.2.0" } ]
   end
 
   defp package do
