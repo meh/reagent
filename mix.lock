@@ -1,3 +1,3 @@
 %{"derp": {:git, "git://github.com/meh/derp.git", "7ed055d860292cb590d6505f44876c0311eef546", []},
-  "exts": {:package, "0.2.1"},
-  "socket": {:package, "0.2.7"}}
+  "exts": {:package, "0.2.2"},
+  "socket": {:package, "0.2.8"}}

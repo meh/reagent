@@ -45,13 +45,13 @@ defmodule Reagent.Connection do
   """
   @spec secure?(t) :: boolean
   def secure?(%C{socket: socket}) when socket |> is_port, do: false
-  def secure?(%C{socket: socket}) when socket |> Record.record?(:sslsocket), do: true
+  def secure?(%C{socket: socket}) when socket |> Record.is_record(:sslsocket), do: true
 
   @doc """
   Get the SSL next negotiated protocol.
   """
   @spec negotiated_protocol(t) :: nil | String.t
-  def negotiated_protocol(%C{socket: socket}) when socket |> Record.record?(:sslsocket) do
+  def negotiated_protocol(%C{socket: socket}) when socket |> Record.is_record(:sslsocket) do
     socket |> Socket.SSL.negotiated_protocol
   end
 
