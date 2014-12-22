@@ -162,7 +162,7 @@ defmodule Reagent.Listener do
   @doc false
   def handle_cast({ :acceptors, number }, self) when number > 0 do
     pids = Enum.map(1 .. number, fn _ ->
-      Kernel.spawn_link __MODULE__, :acceptor, [self]
+      { :ok, pid } = Task.start_link __MODULE__, :acceptor, [self]; pid
     end) |> Enum.into HashSet.new
 
     { :noreply, %L{self | acceptors: Set.union(self.acceptors, pids)} }
