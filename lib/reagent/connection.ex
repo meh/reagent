@@ -91,6 +91,8 @@ defmodule Reagent.Connection do
     defwrap recv(self, length_or_options)
     defwrap recv(self, length, options)
 
+    defwrap close(self)
+
     defwrap shutdown(self)
     defwrap shutdown(self, how)
   end

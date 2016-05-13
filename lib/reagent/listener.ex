@@ -163,7 +163,7 @@ defmodule Reagent.Listener do
   def handle_cast({ :acceptors, number }, self) when number > 0 do
     pids = Enum.map(1 .. number, fn _ ->
       { :ok, pid } = Task.start_link __MODULE__, :acceptor, [self]; pid
-    end) |> Enum.into HashSet.new
+    end) |> Enum.into(HashSet.new)
 
     { :noreply, %L{self | acceptors: Set.union(self.acceptors, pids)} }
   end
@@ -222,7 +222,7 @@ defmodule Reagent.Listener do
 
           { :ok, pid } ->
             socket |> Socket.process!(pid)
-            pid |> send { Reagent, :ack }
+            pid |> send({ Reagent, :ack })
 
             GenServer.cast self.id, { :accepted, pid, conn }
 
