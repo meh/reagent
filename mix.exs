@@ -4,7 +4,7 @@ defmodule Reagent.Mixfile do
   def project do
     [ app:     :reagent,
       version: "0.1.5",
-      elixir:  "~> 1.0.0-rc1",
+      elixir:  "~> 1.0.0-rc1 or ~> 1.1.0-rc.0 or ~> 1.2.0-rc.0",
       deps:    deps,
       package: package,
       description: "You need more reagents to conjure this server" ]
