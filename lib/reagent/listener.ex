@@ -255,4 +255,42 @@ defmodule Reagent.Listener do
   defp wait(self) do
     GenServer.call self.id, :wait
   end
+
+  defimpl Socket.Protocol do
+    use Socket.Helpers
+
+    defwrap equal?(self, other)
+
+    defwrap accept(self)
+    defwrap accept(self, options)
+
+    defwrap options(self, options)
+    defwrap packet(self, type)
+    defwrap process(self, pid)
+
+    defwrap active(self)
+    defwrap active(self, mode)
+    defwrap passive(self)
+
+    defwrap local(self)
+    defwrap remote(self)
+
+    defwrap close(self)
+  end
+
+  defimpl Socket.Stream.Protocol do
+    use Socket.Helpers
+
+    defwrap send(self, data)
+    defwrap file(self, path, options)
+
+    defwrap recv(self)
+    defwrap recv(self, length_or_options)
+    defwrap recv(self, length, options)
+
+    defwrap close(self)
+
+    defwrap shutdown(self)
+    defwrap shutdown(self, how)
+  end
 end
