@@ -25,6 +25,22 @@ defmodule Reagent.Connection do
   end
 
   @doc """
+  Get the `Connection` id.
+  """
+  @spec id(t) :: reference
+  def id(%__MODULE__{id: id}) do
+    id
+  end
+
+  @doc """
+  Get the `Connection` listener.
+  """
+  @spec listener(t) :: Reagent.Listener.t
+  def listener(%__MODULE__{listener: listener}) do
+    listener
+  end
+
+  @doc """
   Get the environment for the connection.
   """
   @spec env(t) :: term
