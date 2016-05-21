@@ -13,17 +13,18 @@ defmodule Reagent.Listener do
   @opaque t :: %Reagent.Listener{}
 
   use GenServer
+  use Data
 
   @doc """
   Get the environment for the listener.
   """
   @spec env(pid | t) :: term
   def env(%__MODULE__{} = self) do
-    self.env |> Data.Dict.get(self.id)
+    self.env |> Dict.get(self.id)
   end
 
   def env(id) do
-    GenServer.call(id, :env) |> Data.Dict.get(id)
+    GenServer.call(id, :env) |> Dict.get(id)
   end
 
   @doc """
@@ -31,25 +32,25 @@ defmodule Reagent.Listener do
   """
   @spec env(pid | t, reference | term) :: term
   def env(%__MODULE__{} = self, value) do
-    self.env |> Data.Dict.put(self.id, value)
+    self.env |> Dict.put(self.id, value)
 
     value
   end
 
   def env(id, value) do
-    GenServer.call(id, :env) |> Data.Dict.put(id, value)
+    GenServer.call(id, :env) |> Dict.put(id, value)
 
     value
   end
 
   @doc false
   def env_for(self, conn) do
-    self.env |> Data.Dict.get(conn)
+    self.env |> Dict.get(conn)
   end
 
   @doc false
   def env_for(self, conn, value) do
-    self.env |> Data.Dict.put(conn, value)
+    self.env |> Dict.put(conn, value)
 
     value
   end
@@ -102,7 +103,7 @@ defmodule Reagent.Listener do
         Process.flag :trap_exit, true
 
         dict = Exts.Dict.new(access: :public)
-        dict |> Data.Dict.put(id, descriptor[:env])
+        dict |> Dict.put(id, descriptor[:env])
 
         listener = %__MODULE__{
           socket:      socket,
@@ -163,7 +164,7 @@ defmodule Reagent.Listener do
       { :ok, pid } = Task.start_link __MODULE__, :acceptor, [self]; pid
     end) |> Enum.into(MapSet.new)
 
-    { :noreply, %__MODULE__{self | acceptors: Data.Set.union(self.acceptors, pids)} }
+    { :noreply, %__MODULE__{self | acceptors: Set.union(self.acceptors, pids)} }
   end
 
   def handle_cast({ :acceptors, number }, self) when number < 0 do
@@ -177,23 +178,23 @@ defmodule Reagent.Listener do
   end
 
   def handle_cast({ :accepted, pid, conn }, self) do
-    { :noreply, %__MODULE__{self | connections: self.connections |> Data.Dict.put(Process.monitor(pid), conn)} }
+    { :noreply, %__MODULE__{self | connections: self.connections |> Dict.put(Process.monitor(pid), conn)} }
   end
 
   @doc false
   def handle_info({ :EXIT, pid, _reason }, self) do
-    acceptors = self.acceptors |> Data.Set.delete(pid)
-      |> Data.Set.add(Kernel.spawn_link(__MODULE__, :acceptor, [self]))
+    acceptors = self.acceptors |> Set.delete(pid)
+      |> Set.add(Kernel.spawn_link(__MODULE__, :acceptor, [self]))
 
     { :noreply, %__MODULE__{self | acceptors: acceptors } }
   end
 
   def handle_info({ :DOWN, ref, _type, _object, _info }, self) do
-    connection  = self.connections |> Data.Dict.get(ref)
-    connections = self.connections |> Data.Dict.delete(ref)
+    connection  = self.connections |> Dict.get(ref)
+    connections = self.connections |> Dict.delete(ref)
 
     connection |> Socket.close
-    Data.Dict.delete(self.env, connection.id)
+    Dict.delete(self.env, connection.id)
 
     case :queue.out(self.waiting) do
       { :empty, queue } ->
