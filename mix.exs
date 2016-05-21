@@ -16,11 +16,11 @@ defmodule Reagent.Mixfile do
 
   defp deps do
     [ { :socket, "~> 0.3" },
-      { :exts,   "~> 0.2" } ]
+      { :exts,   "~> 0.3" } ]
   end
 
   defp package do
-    [ contributors: ["meh"],
+    [ maintainers: ["meh"],
       licenses: ["WTFPL"],
       links: %{"GitHub" => "https://github.com/meh/reagent"} ]
   end

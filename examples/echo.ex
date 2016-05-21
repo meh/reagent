@@ -7,7 +7,7 @@ defmodule Echo do
         :closed
 
       data ->
-        conn |> Socket.Stream.send! data
+        conn |> Socket.Stream.send!(data)
 
         handle(conn)
     end

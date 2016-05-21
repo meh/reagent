@@ -1,3 +1,4 @@
-%{"derp": {:git, "git://github.com/meh/derp.git", "7ed055d860292cb590d6505f44876c0311eef546", []},
-  "exts": {:hex, :exts, "0.2.2"},
-  "socket": {:hex, :socket, "0.3.3"}}
+%{"datastructures": {:hex, :datastructures, "0.2.0", "9970b37b7688cb9980b244482f5ef02bca88acc9ebecddb81836c50bd63d221e", [:mix], []},
+  "derp": {:git, "git://github.com/meh/derp.git", "7ed055d860292cb590d6505f44876c0311eef546", []},
+  "exts": {:hex, :exts, "0.3.1", "8ee21efa0e340878704b3224502776b6d5fa15f8ace2d5a7cf71051cb1764f08", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
+  "socket": {:hex, :socket, "0.3.4", "4fed773102445eb333b4536610b8d9a9ba3c3e85cc84c7491991af9653819d65", [:mix], []}}
