@@ -16,6 +16,22 @@ defmodule Reagent.Listener do
   use Data
 
   @doc """
+  Get the id.
+  """
+  @spec id(t) :: reference
+  def id(%__MODULE__{id: id}) do
+    id
+  end
+
+  @doc """
+  Get the port.
+  """
+  @spec port(t) :: term
+  def port(%__MODULE__{port: port}) do
+    port
+  end
+
+  @doc """
   Get the environment for the listener.
   """
   @spec env(pid | t) :: term
