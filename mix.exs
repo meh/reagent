@@ -3,7 +3,7 @@ defmodule Reagent.Mixfile do
 
   def project do
     [ app:     :reagent,
-      version: "0.1.9",
+      version: "0.1.10",
       deps:    deps,
       package: package,
       description: "You need more reagents to conjure this server" ]
