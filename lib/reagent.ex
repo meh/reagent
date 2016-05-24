@@ -8,6 +8,15 @@
 
 defmodule Reagent do
   @doc """
+  Uses the reagent behaviour and defines the default callbacks.
+  """
+  defmacro __using__(_opts) do
+    quote location: :keep do
+      use Reagent.Behaviour
+    end
+  end
+
+  @doc """
   Start a listener with the given module and the given descriptor.
   """
   @spec start(module, Keyword.t) :: { :ok, pid } | { :error, term }
