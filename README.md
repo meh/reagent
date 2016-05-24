@@ -46,7 +46,7 @@ Simple example
 --------------
 ```elixir
 defmodule Echo do
-  use Reagent.Behaviour
+  use Reagent
 
   def handle(conn) do
     case conn |> Socket.Stream.recv! do
@@ -70,13 +70,13 @@ Complex example
 ---------------
 ```elixir
 defmodule Echo do
-  use Reagent.Behaviour
+  use Reagent
 
   def start(connection) do
-    :gen_server.start __MODULE__, connection, []
+    GenServer.start __MODULE__, connection, []
   end
 
-  use GenServer.Behaviour
+  use GenServer
 
   def init(connection) do
     { :ok, connection }
@@ -97,8 +97,8 @@ defmodule Echo do
     { :noreply, connection }
   end
 
-  def handle_info({ :tcp_closed, _ }, _connection) do
-    { :stop, :normal, _connection }
+  def handle_info({ :tcp_closed, _ }, connection) do
+    { :stop, :normal, connection }
   end
 end
 ```

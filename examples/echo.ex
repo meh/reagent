@@ -1,5 +1,5 @@
 defmodule Echo do
-  use Reagent.Behaviour
+  use Reagent
 
   def handle(conn) do
     case conn |> Socket.Stream.recv! do
