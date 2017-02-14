@@ -17,7 +17,7 @@ defmodule Reagent.Connection do
 
   @doc false
   def new(descriptor) do
-    id       = make_ref
+    id       = make_ref()
     socket   = Keyword.fetch! descriptor, :socket
     listener = Keyword.fetch! descriptor, :listener
 

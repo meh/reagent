@@ -7,25 +7,23 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 defmodule Reagent.Behaviour do
-  use Behaviour
-
   alias Reagent.Listener
   alias Reagent.Connection
 
   @doc """
   Accept a client connection from the listener.
   """
-  defcallback accept(Listener.t) :: { :ok, Socket.t } | { :error, term }
+  @callback accept(Listener.t) :: { :ok, Socket.t } | { :error, term }
 
   @doc """
   Start the process that will handle the connection, either define this or `handle/1`.
   """
-  defcallback start(Connection.t) :: { :ok, pid } | { :error, term }
+  @callback start(Connection.t) :: { :ok, pid } | { :error, term }
 
   @doc """
   Handle the connection, either define this or `start/1`.
   """
-  defcallback handle(Connection.t) :: :ok | { :error, term }
+  @callback handle(Connection.t) :: :ok | { :error, term }
 
   @doc false
   def start_link(pool, listener) do

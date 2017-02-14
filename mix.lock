@@ -1,4 +1,4 @@
-%{"datastructures": {:hex, :datastructures, "0.2.2", "acec7de9ae6b95502d5c8d8cdac9958f83845035d5f2080782623f2b1222270a", [:mix], []},
+%{"datastructures": {:hex, :datastructures, "0.2.6", "fe0fd2566886c79c072024acb7a062eaed56b06a87931526daefbdc12d902dee", [:mix], []},
   "derp": {:git, "git://github.com/meh/derp.git", "7ed055d860292cb590d6505f44876c0311eef546", []},
-  "exts": {:hex, :exts, "0.3.1", "8ee21efa0e340878704b3224502776b6d5fa15f8ace2d5a7cf71051cb1764f08", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
-  "socket": {:hex, :socket, "0.3.4", "4fed773102445eb333b4536610b8d9a9ba3c3e85cc84c7491991af9653819d65", [:mix], []}}
+  "exts": {:hex, :exts, "0.3.3", "f03027317eb2a672ec53bb675bad6670e943edf1dfafa3097a7d3367cb630ebc", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
+  "socket": {:hex, :socket, "0.3.7", "68c029a8449fc6efc5f4c3bdf6d8b19ca94d3304e419f364c5cfc8b716f7c219", [:mix], []}}
