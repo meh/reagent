@@ -16,7 +16,8 @@ defmodule Reagent.Mixfile do
 
   defp deps do
     [ { :socket, "~> 0.3" },
-      { :exts,   "~> 0.3" } ]
+      { :exts,   "~> 0.3" },
+      { :ex_doc, "~> 0.14", only: [:dev] } ]
   end
 
   defp package do
