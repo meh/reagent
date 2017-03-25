@@ -143,11 +143,11 @@ defmodule Reagent.Listener do
   end
 
   defp to_options(options) do
-    options |> Keyword.merge(mode: :passive, automatic: false)
+    options |> Keyword.merge(mode: :passive)
   end
 
   defp to_options(options, secure) do
-    options |> Keyword.merge(secure) |> Keyword.merge(mode: :passive, automatic: false)
+    options |> Keyword.merge(secure) |> Keyword.merge(mode: :passive)
   end
 
   @doc false
