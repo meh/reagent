@@ -97,7 +97,7 @@ defmodule Reagent.Listener do
 
   @doc false
   def init(descriptor) do
-    if descriptor[:profile] do
+    if Keyword.get(descriptor, :profile) do
       Reagent.Profile.start
     end
 
@@ -119,7 +119,11 @@ defmodule Reagent.Listener do
         Process.flag :trap_exit, true
 
         dict = Exts.Dict.new(access: :public)
-        dict |> Dict.put(id, descriptor[:env])
+
+        Seq.each Keyword.get(descriptor, :env), fn
+          { key, value } ->
+            dict |> Dict.put(key, value)
+        end
 
         listener = %__MODULE__{
           socket:      socket,
