@@ -1,6 +1,6 @@
-%{"datastructures": {:hex, :datastructures, "0.2.6", "fe0fd2566886c79c072024acb7a062eaed56b06a87931526daefbdc12d902dee", [:mix], []},
+%{"datastructures": {:hex, :datastructures, "0.2.8", "cd9f53bed18f1d9526689a9559676c682b5a3ba230c1e3de187182f4ff86899c", [:mix], []},
   "derp": {:git, "git://github.com/meh/derp.git", "7ed055d860292cb590d6505f44876c0311eef546", []},
   "earmark": {:hex, :earmark, "1.2.0", "bf1ce17aea43ab62f6943b97bd6e3dc032ce45d4f787504e3adf738e54b42f3a", [:mix], []},
   "ex_doc": {:hex, :ex_doc, "0.15.0", "e73333785eef3488cf9144a6e847d3d647e67d02bd6fdac500687854dd5c599f", [:mix], [{:earmark, "~> 1.1", [hex: :earmark, optional: false]}]},
-  "exts": {:hex, :exts, "0.3.3", "f03027317eb2a672ec53bb675bad6670e943edf1dfafa3097a7d3367cb630ebc", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
+  "exts": {:hex, :exts, "0.3.4", "ec2af096ab4494c087a9615fffe9d5ba8a0fa0ccc465b340ee522ed7aff79078", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
   "socket": {:hex, :socket, "0.3.10", "a615c308e681de78595ec98189a27aa2ef9b0fe8ce400c560d8185b366f13eae", [:mix], []}}
