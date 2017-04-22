@@ -44,7 +44,7 @@ defmodule Reagent.Behaviour do
       defoverridable accept: 1
 
       def start(conn) do
-        :ok
+        {:ok, self()}
       end
 
       defoverridable start: 1
