@@ -18,7 +18,7 @@ defmodule Reagent.Behaviour do
   @doc """
   Start the process that will handle the connection, either define this or `handle/1`.
   """
-  @callback start(Connection.t) :: { :ok, pid } | { :error, term }
+  @callback start(Connection.t) :: :ok | { :ok, pid } | { :error, term }
 
   @doc """
   Handle the connection, either define this or `start/1`.
