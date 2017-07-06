@@ -155,7 +155,7 @@ defmodule Reagent.Listener do
   end
 
   @doc false
-  def terminate(self, _) do
+  def terminate(_reason, self) do
     self.socket |> Socket.close
   end
 
